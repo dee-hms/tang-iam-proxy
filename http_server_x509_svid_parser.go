@@ -19,7 +19,7 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 package main
 
 import (
@@ -30,7 +30,7 @@ import (
 	"net/http/httputil"
 )
 
-// defaultHandler is the function that 
+// defaultHandler is the function that
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	dump, err := httputil.DumpRequest(r, true)
 	log.Println("HTTP request", r, string(dump), err)
