@@ -1,57 +1,109 @@
 /*
+ * Copyright 2023.
  *
- * Copyright 2023 sarroutb@redhat.com
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom
- * the Software is furnished to do so, subject to the following conditions:
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	"os"
+	"time"
 )
 
-// defaultHandler is the function that
-func defaultHandler(w http.ResponseWriter, r *http.Request) {
-	dump, err := httputil.DumpRequest(r, true)
-	log.Println("HTTP request", r, string(dump), err)
-	log.Println("HTTP TLS", r.TLS, string(r.TLS.TLSUnique))
-	certs := r.TLS.PeerCertificates
-	log.Println("HTTP CERTS", certs)
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write([]byte("Hello\n"))
+const USAGE =
+`
+usage:
+
+http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> [-port <port>] [-help]
+
+Options:
+  -help       Optional, prints help message
+  -port       Optional, the HTTPS port for the server to listen on, defaults to 443
+  -serverCert Mandatory, server's certificate file
+  -serverKey  Mandatory, server's private key certificate file
+
+`
+
+const READ_TIMEOUT = 5
+const WRITE_TIMEOUT = 5
+
+// printConnState prints information of the state of the connection and peer certificates, if any
+func printConnState(r *http.Request) {
+	state := r.TLS
+	log.Print("**************** Connection State *****************")
+	log.Printf("Version: %x", state.Version)
+	log.Printf("HandshakeComplete: %t", state.HandshakeComplete)
+	log.Printf("DidResume: %t", state.DidResume)
+	log.Printf("CipherSuite: %x", state.CipherSuite)
+	log.Printf("NegotiatedProtocol: %s", state.NegotiatedProtocol)
+	log.Printf("NegotiatedProtocolIsMutual: %t", state.NegotiatedProtocolIsMutual)
+	log.Print("Certificate chain:")
+	for i, cert := range state.PeerCertificates {
+		subject := cert.Subject
+		issuer := cert.Issuer
+		log.Printf(" %d s:/C=%v/ST=%v/L=%v/O=%v/OU=%v/CN=%s", i, subject.Country, subject.Province,
+			subject.Locality, subject.Organization, subject.OrganizationalUnit, subject.CommonName)
+		log.Printf("   i:/C=%v/ST=%v/L=%v/O=%v/OU=%v/CN=%s", issuer.Country, issuer.Province,
+			issuer.Locality, issuer.Organization, issuer.OrganizationalUnit, issuer.CommonName)
+		for _, uri := range cert.URIs {
+			log.Printf("   SAN URL:[%v]", uri)
+		}
+	}
+	log.Print("**************** /Connection State ****************")
 }
 
 // main function
 func main() {
-	http.HandleFunc("/", defaultHandler)
-	port := flag.Uint("p", 8083, "port to listen to")
-	cert := flag.String("c", "server.crt", "certificate file")
-	key := flag.String("k", "server.key", "key file")
+	help := flag.Bool("help", false, "Optional, prints help information")
+	port := flag.String("port", "443", "HTTPS port, defaults to 443")
+	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
+	serverKey  := flag.String("serverKey",  "", "Mandatory, the file name of the server's private key file")
 	flag.Parse()
-	fmt.Println(fmt.Sprintf("port:[%d], server certificate:[%s], server key:[%s]", *port, *cert, *key))
-	sport := fmt.Sprintf(":%d", *port)
-	err := http.ListenAndServeTLS(sport, *cert, *key, nil)
+
+	if *help == true {
+		fmt.Println(USAGE)
+		os.Exit(0)
+	} else if *serverCert == "" {
+		fmt.Printf("\nPlease, provide server certification file\n%s", USAGE)
+		os.Exit(1)
+	} else if *serverKey == "" {
+		fmt.Printf("\nPlease, provide server private key file\n%s", USAGE)
+		os.Exit(2)
+	}
+
+	server := &http.Server{
+		Addr:         ":" + *port,
+		ReadTimeout:  READ_TIMEOUT * time.Second,
+		WriteTimeout: WRITE_TIMEOUT * time.Second,
+		TLSConfig:    &tls.Config{
+			ClientAuth: tls.RequireAnyClientCert,
+		},
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received %s request for host %s from IP address %s",
+			r.Method, r.Host, r.RemoteAddr)
+		printConnState(r)
+	})
+
+	log.Printf("Starting HTTPS server, port:[%v]", *port)
+	err := server.ListenAndServeTLS(*serverCert, *serverKey)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Error:%v", err))
+		log.Fatalf("Unable to start HTTPS server, error:[%v]", err)
 	}
 }
