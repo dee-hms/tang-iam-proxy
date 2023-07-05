@@ -23,13 +23,13 @@ printf "*************************\n"
 
 
 ############################# Generate CA ###############################
-openssl genrsa -out ca_${certname}.key 4096
-openssl req -new -x509 -days 365 -key ca_${certname}.key -out ca_${certname}_cert.pem -subj "/C=ES/ST=Madrid/L=Madrid/O=Red Hat/OU=org/CN=www.redhat.com"
+openssl genrsa -out "ca_${certname}.key" 4096
+openssl req -new -x509 -days 365 -key "ca_${certname}.key" -out "ca_${certname}_cert.pem" -subj "/C=ES/ST=Madrid/L=Madrid/O=Red Hat/OU=org/CN=www.redhat.com"
 #########################################################################
 
 
 ############################# Generate Server certificate ################################
-cat<<EOF>${certname}_cert_ext.cnf
+cat<<EOF>"${certname}_cert_ext.cnf"
 basicConstraints = CA:FALSE
 nsCertType = server
 nsComment = "OpenSSL Generated Server Certificate"
@@ -44,13 +44,13 @@ DNS.1 = fedora
 DNS.2 = localhost
 EOF
 
-openssl genrsa -out ${certname}.key 4096
-openssl req -new -key ${certname}.key -out ${certname}.csr -subj "/C=ES/ST=Madrid/L=Madrid/O=Red Hat/OU=org/CN=www.redhat.com"
-openssl x509 -req -in ${certname}.csr -CA ca_${certname}_cert.pem -CAkey ca_${certname}.key -out ${certname}.crt -CAcreateserial -days 365 -sha256 -extfile ${certname}_cert_ext.cnf
+openssl genrsa -out "${certname}.key" 4096
+openssl req -new -key "${certname}.key" -out "${certname}.csr" -subj "/C=ES/ST=Madrid/L=Madrid/O=Red Hat/OU=org/CN=www.redhat.com"
+openssl x509 -req -in "${certname}.csr" -CA "ca_${certname}_cert.pem" -CAkey "ca_${certname}.key" -out "${certname}.crt" -CAcreateserial -days 365 -sha256 -extfile "${certname}_cert_ext.cnf"
 ########################################################################################
 
 
 ############################# Create Server bundle #####################################
-cat ${certname}.crt > ${certname}_bundle.pem
-cat ca_${certname}_cert.pem >> ${certname}_bundle.pem
+cat "${certname}.crt" > "${certname}_bundle.pem"
+cat "ca_${certname}_cert.pem" >> "${certname}_bundle.pem"
 ########################################################################################
