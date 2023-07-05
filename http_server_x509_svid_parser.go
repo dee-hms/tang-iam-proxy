@@ -25,8 +25,7 @@ import (
 	"time"
 )
 
-const USAGE =
-`
+const USAGE = `
 usage:
 
 http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> [-port <port>] [-help]
@@ -72,7 +71,7 @@ func main() {
 	help := flag.Bool("help", false, "Optional, prints help information")
 	port := flag.String("port", "443", "HTTPS port, defaults to 443")
 	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
-	serverKey  := flag.String("serverKey",  "", "Mandatory, the file name of the server's private key file")
+	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
 	flag.Parse()
 
 	if *help == true {
@@ -90,7 +89,7 @@ func main() {
 		Addr:         ":" + *port,
 		ReadTimeout:  READ_TIMEOUT * time.Second,
 		WriteTimeout: WRITE_TIMEOUT * time.Second,
-		TLSConfig:    &tls.Config{
+		TLSConfig: &tls.Config{
 			ClientAuth: tls.RequireAnyClientCert,
 		},
 	}
