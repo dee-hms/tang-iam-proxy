@@ -1,7 +1,6 @@
-CLI
 Github
-grcov
-koji
-koji-retriever
-llvm
+http
+HTTP
 Markdown
+SVID
+svid
