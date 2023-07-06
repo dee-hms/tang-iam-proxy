@@ -96,7 +96,7 @@ $ cat data/agent/keys.json
 The agent key provided to curl will be of the format:
 
 ```bash
-$ cat agent_key.txt
+$ cat agent.key
 -----BEGIN PRIVATE KEY-----
 MIGHAgE...LoNg_KeY_HeRe_123a_...LuymQw
 -----END PRIVATE KEY-----
