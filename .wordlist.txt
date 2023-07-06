@@ -4,5 +4,15 @@ HTTP
 https
 HTTPS
 Markdown
+programmatically
+SSL
+ssl
+SPIRE
 SVID
 svid
+SVIDs
+svids
+URI
+uri
+URL
+url
