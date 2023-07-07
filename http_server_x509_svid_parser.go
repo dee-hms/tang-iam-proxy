@@ -50,7 +50,6 @@ func printConnState(r *http.Request) {
 	log.Printf("DidResume: %t", state.DidResume)
 	log.Printf("CipherSuite: %x", state.CipherSuite)
 	log.Printf("NegotiatedProtocol: %s", state.NegotiatedProtocol)
-	log.Printf("NegotiatedProtocolIsMutual: %t", state.NegotiatedProtocolIsMutual)
 	log.Print("Certificate chain:")
 	for i, cert := range state.PeerCertificates {
 		subject := cert.Subject
@@ -74,8 +73,8 @@ func main() {
 	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
 	flag.Parse()
 
-	if *help == true {
-		fmt.Println(USAGE)
+	if *help {
+		fmt.Print(USAGE)
 		os.Exit(0)
 	} else if *serverCert == "" {
 		fmt.Printf("\nPlease, provide server certification file\n%s", USAGE)
