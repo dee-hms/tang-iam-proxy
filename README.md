@@ -144,7 +144,6 @@ If everything works as expected HTTPS server will dump the information of the ag
 2023/01/02 03:06:18 DidResume: false
 2023/01/02 03:06:18 CipherSuite: 1301
 2023/01/02 03:06:18 NegotiatedProtocol: h2
-2023/01/02 03:06:18 NegotiatedProtocolIsMutual: true
 2023/01/02 03:06:18 Certificate chain:
 2023/01/02 03:06:18  0 s:/C=[US]/ST=[]/L=[]/O=[SPIRE]/OU=[]/CN=
 2023/01/02 03:06:18    i:/C=[US]/ST=[]/L=[]/O=[SPIFFE]/OU=[]/CN=
