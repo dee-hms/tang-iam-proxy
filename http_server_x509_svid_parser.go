@@ -38,8 +38,8 @@ Options:
 
 `
 
-const READ_TIMEOUT = 5
-const WRITE_TIMEOUT = 5
+const HTTP_READ_TIMEOUT = 5
+const HTTP_WRITE_TIMEOUT = 5
 
 // printConnState prints information of the state of the connection and peer certificates, if any
 func printConnState(r *http.Request) {
@@ -86,8 +86,8 @@ func main() {
 
 	server := &http.Server{
 		Addr:         ":" + *port,
-		ReadTimeout:  READ_TIMEOUT * time.Second,
-		WriteTimeout: WRITE_TIMEOUT * time.Second,
+		ReadTimeout:  HTTP_READ_TIMEOUT * time.Second,
+		WriteTimeout: HTTP_WRITE_TIMEOUT * time.Second,
 		TLSConfig: &tls.Config{
 			ClientAuth: tls.RequireAnyClientCert,
 		},
