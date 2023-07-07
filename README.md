@@ -155,7 +155,7 @@ If everything works as expected HTTPS server will dump the information of the ag
 This way, forward implementation of a proxy that uses SVID to forward agent requests can be implemented.
 
 ## References
-[Configuring SPIRE for Amazon EC2 Instances](https://spiffe.io/docs/latest/deploying/configuring/#amazon-ec2-instances)
-[Install Spire Agents](https://spiffe.io/docs/latest/deploying/install-agents/)
+[Configuring SPIRE for Amazon EC2 Instances](https://spiffe.io/docs/latest/deploying/configuring/#amazon-ec2-instances)\
+[Install Spire Agents](https://spiffe.io/docs/latest/deploying/install-agents/)\
 [Install the Spire Server](https://spiffe.io/docs/latest/deploying/install-server/)
 
