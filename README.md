@@ -157,5 +157,6 @@ This way, forward implementation of a proxy that uses SVID to forward agent requ
 ## References
 [Configuring SPIRE for Amazon EC2 Instances](https://spiffe.io/docs/latest/deploying/configuring/#amazon-ec2-instances)\
 [Install Spire Agents](https://spiffe.io/docs/latest/deploying/install-agents/)\
-[Install the Spire Server](https://spiffe.io/docs/latest/deploying/install-server/)
+[Install the Spire Server](https://spiffe.io/docs/latest/deploying/install-server/)\
+[How to generate certificates](https://www.golinuxcloud.com/golang-http/#Secure_Communication_over_HTTP_with_TLS_and_MTLS)
 
