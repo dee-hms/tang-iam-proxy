@@ -54,3 +54,12 @@ openssl x509 -req -in "${certname}.csr" -CA "ca_${certname}_cert.pem" -CAkey "ca
 cat "${certname}.crt" > "${certname}_bundle.pem"
 cat "ca_${certname}_cert.pem" >> "${certname}_bundle.pem"
 ########################################################################################
+
+
+############################# Clean intermediate files #####################################
+rm "${certname}.crt"
+rm "${certname}.csr"
+rm "ca_${certname}_cert.srl"
+rm "ca_${certname}.key"
+rm "${certname}_cert_ext.cnf"
+#############################################################################################
