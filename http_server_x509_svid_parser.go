@@ -17,12 +17,16 @@ package main
 
 import (
 	"crypto/tls"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const USAGE = `
@@ -32,6 +36,8 @@ http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <ser
 
 Options:
   -help       Optional, prints help message
+  -dbUser     Optional, defaults to root
+  -dbPass     Optional, database user password, defualts to redhat123
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory, server's certificate file
   -serverKey  Mandatory, server's private key certificate file
@@ -40,6 +46,8 @@ Options:
 
 const HTTP_READ_TIMEOUT = 5
 const HTTP_WRITE_TIMEOUT = 5
+
+var db *sql.DB
 
 // printConnState prints information of the state of the connection and peer certificates, if any
 func printConnState(r *http.Request) {
@@ -65,10 +73,37 @@ func printConnState(r *http.Request) {
 	log.Print("**************** /Connection State ****************")
 }
 
+func getSpiffeId(r *http.Request) (string, error) {
+	state := r.TLS
+	for _, cert := range state.PeerCertificates {
+		for _, uri := range cert.URIs {
+			if strings.HasPrefix(uri.String(), "spiffe://") {
+				return uri.String(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("getSpiffeId %s: no spiffeId found")
+}
+
+func getTangId(spiffeId string) (string, error) {
+	var tangId string
+	row := db.QueryRow("SELECT tang_id FROM bindings WHERE spiffe_id = ?", spiffeId)
+	if err := row.Scan(tangId); err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("getTangId %s: no tangId found", spiffeId)
+		}
+		return "", fmt.Errorf("getTangId %s: %v", spiffeId, err)
+	}
+	return tangId, nil
+}
+
 // main function
 func main() {
+	var err error
 	help := flag.Bool("help", false, "Optional, prints help information")
 	port := flag.String("port", "443", "HTTPS port, defaults to 443")
+	dbUser := flag.String("dbUser", "root", "DB user, defaults to root")
+	dbPass := flag.String("dbPass", "redhat123", "DB Password, defaults to redhat123")
 	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
 	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
 	flag.Parse()
@@ -84,6 +119,20 @@ func main() {
 		os.Exit(2)
 	}
 
+	// Get a database handle.
+	dbConnectString := fmt.Sprintf("%s:%s@/tang_bindings", dbUser, dbPass)
+	db, err = sql.Open("mysql", dbConnectString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
+	log.Printf("Connected to DB!")
+	// defer dbclose?
+
 	server := &http.Server{
 		Addr:         ":" + *port,
 		ReadTimeout:  HTTP_READ_TIMEOUT * time.Second,
@@ -97,10 +146,21 @@ func main() {
 		log.Printf("Received %s request for host %s from IP address %s",
 			r.Method, r.Host, r.RemoteAddr)
 		printConnState(r)
+		spiffeId, err := getSpiffeId(r)
+		if err != nil {
+			log.Print(err)
+			// return unauthorized
+		}
+		tangId, err := getTangId(spiffeId)
+		if err != nil {
+			log.Print(err)
+			// return unauthorized
+		}
+		log.Printf("tangId: %s", tangId)
 	})
 
 	log.Printf("Starting HTTPS server, port:[%v]", *port)
-	err := server.ListenAndServeTLS(*serverCert, *serverKey)
+	err = server.ListenAndServeTLS(*serverCert, *serverKey)
 	if err != nil {
 		log.Fatalf("Unable to start HTTPS server, error:[%v]", err)
 	}
