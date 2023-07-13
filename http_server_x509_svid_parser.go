@@ -91,7 +91,7 @@ func getSpiffeId(r *http.Request) (string, error) {
 func getTangId(spiffeId string) (string, error) {
 	var tangId string
 	row := db.QueryRow("SELECT tang_id FROM bindings WHERE spiffe_id = ?", spiffeId)
-	if err := row.Scan(tangId); err != nil {
+	if err := row.Scan(&tangId); err != nil {
 		if err == sql.ErrNoRows {
 			return "", fmt.Errorf("getTangId %s: no tangId found", spiffeId)
 		}
@@ -135,6 +135,7 @@ func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	originalPath := r.URL.Path
 	r.URL.Path = fmt.Sprintf("/%s/%s", tangId, originalPath)
 	r.Header.Set("X-Tang-Id", tangId)
+	r.URL.Scheme = "http"
 
 	s.Proxy.ServeHTTP(w, r)
 	log.Printf("received response from tang server")
