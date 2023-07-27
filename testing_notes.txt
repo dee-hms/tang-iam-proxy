@@ -9,8 +9,8 @@ sudo service mysqld start
 mysql -u root -p
 create database tang_bindings;
 use tang_bindings;
-create table bindings ( spiffe_id VARCHAR(255) NOT NULL, tang_keyid VARCHAR(255) NOT NULL);
-insert into bindings (spiffe_id, tang_keyid) values ('spiffe://example.org/spire/agent/aws_iid/399777895069/us-east-1/i-0a875e31b0c81c7cd', 'workspace12345');
+create table bindings ( spiffe_id VARCHAR(255) NOT NULL, tang_id VARCHAR(255) NOT NULL);
+insert into bindings (spiffe_id, tang_id) values ('spiffe://example.org/spire/agent/aws_iid/399777895069/us-east-1/i-0a875e31b0c81c7cd', 'workspace12345');
 
 * Create a backend server
 

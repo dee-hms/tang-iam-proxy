@@ -134,8 +134,9 @@ func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// modify request by adding tangId
 	originalPath := r.URL.Path
 	r.URL.Path = fmt.Sprintf("/%s/%s", tangId, originalPath)
-	r.Header.Set("X-Tang-Id", tangId)
-	r.URL.Scheme = "http"
+	log.Printf("URL Path %s\n", r.URL.Path)
+	log.Printf("Original Path %s\n", originalPath)
+	r.URL.Scheme = "https"
 
 	s.Proxy.ServeHTTP(w, r)
 	log.Printf("received response from tang server")
@@ -176,9 +177,10 @@ func main() {
 		log.Fatal(pingErr)
 	}
 	log.Printf("Connected to DB!")
+	fmt.Printf("\nSending requests to %s\n", *tangServer)
 
 	// get a proxy
-	proxy, err := NewProxy(fmt.Sprintf("http://%s", *tangServer))
+	proxy, err := NewProxy(fmt.Sprintf("https://%s", *tangServer))
 	if err != nil {
 		log.Fatal(err)
 	}
