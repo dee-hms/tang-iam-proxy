@@ -1,5 +1,9 @@
 # http-server-x509-svid-parser
 
+## License
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Introduction
 This server is an HTTPS server that parses X509 client certificate and extracts SVID from Subject Alternate Names extension.
 Main purpose of the server is to show how to extract previous information from the SPIRE agent generated certificates.
