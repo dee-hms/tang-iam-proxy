@@ -85,7 +85,7 @@ func getSpiffeId(r *http.Request) (string, error) {
 			}
 		}
 	}
-	return "", fmt.Errorf("getSpiffeId %s: no spiffeId found")
+	return "", fmt.Errorf("getSpiffeId: no spiffeId found")
 }
 
 func getTangId(spiffeId string) (string, error) {
