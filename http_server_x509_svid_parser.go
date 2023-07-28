@@ -18,6 +18,7 @@ package main
 import (
 	"crypto/tls"
 	"database/sql"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
@@ -34,22 +35,29 @@ import (
 const USAGE = `
 usage:
 
-http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> [-port <port>] [-help]
+http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
+                            [-port <port>] [-dbUser <dbuser>] [-dbPass <dbpass>] [-httpUser <httpuser>] [-httpPass <httppass>] [-help] [-verbose]
 
 Options:
   -help       Optional, prints help message
   -dbUser     Optional, defaults to root
-  -dbPass     Optional, database user password, defualts to redhat123
+  -dbPass     Optional, database user password, defaults to redhat123
+  -httpUser   Optional, http user, defaults to jdoe
+  -httpPass   Optional, http password, defaults to jdoe123
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory, server's certificate file
   -serverKey  Mandatory, server's private key certificate file
   -tangServer Mandatory, tang server location in form host:port
+  -verbose    Optional, be more verbose
 
 `
 
 // Read/Write timeouts
-const HTTP_READ_TIMEOUT = 5
-const HTTP_WRITE_TIMEOUT = 5
+const HTTP_READ_TIMEOUT = 5 * time.Second
+const HTTP_WRITE_TIMEOUT = 5 * time.Second
+
+// EE well known URL
+const EE_URL = "/api/dee-hms/"
 
 // Global DB variable
 var db *sql.DB
@@ -91,32 +99,53 @@ func getSpiffeId(r *http.Request) (string, error) {
 	return "", fmt.Errorf("getSpiffeId: no spiffeId found")
 }
 
-// getTangId returns the ID (A.K.A. workspace) corresponding to an Spiffe ID
-func getTangId(spiffeId string) (string, error) {
-	var tangId string
-	row := db.QueryRow("SELECT tang_id FROM bindings WHERE spiffe_id = ?", spiffeId)
-	if err := row.Scan(&tangId); err != nil {
+// getWorkspace returns the ID (A.K.A. workspace) corresponding to an Spiffe ID
+func getWorkspace(spiffeId string) (string, error) {
+	var workspace string
+	row := db.QueryRow("SELECT tang_workspace FROM bindings WHERE spiffe_id = ?", spiffeId)
+	if err := row.Scan(&workspace); err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("getTangId %s: no tangId found", spiffeId)
+			return "", fmt.Errorf("getWorkspace %s: no workspace found", spiffeId)
 		}
-		return "", fmt.Errorf("getTangId %s: %v", spiffeId, err)
+		return "", fmt.Errorf("getWorkspace %s: %v", spiffeId, err)
 	}
-	return tangId, nil
+	return workspace, nil
 }
 
+// AppData struct allows not having to pass user/password everywhere
+type AppData struct {
+	user string
+	password string
+	verbose bool
+}
+
+// SimpleProxy relevant information
 type SimpleProxy struct {
 	Proxy *httputil.ReverseProxy
+	appData *AppData
+	targetHost string
 }
 
 // newProxy takes target host and creates a reverse proxy
-func newProxy(targetHost string) (*SimpleProxy, error) {
+func newProxy(targetHost string, appData* AppData) (*SimpleProxy, error) {
 	url, err := url.Parse(targetHost)
 	if err != nil {
 		return nil, err
 	}
-
-	s := &SimpleProxy{httputil.NewSingleHostReverseProxy(url)}
+	log.Printf("URL:[%s]", url);
+	s := &SimpleProxy{httputil.NewSingleHostReverseProxy(url), appData, targetHost}
 	return s, nil
+}
+
+// basicAuth function encodes user/password in Base64 format
+func basicAuth(username string, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
+}
+
+// addUserPassword encodes Authorization header with user and password
+func addUserPassword(req *http.Request, audata AppData) {
+	req.Header.Add("Authorization", "Basic " + basicAuth(audata.user, audata.password))
 }
 
 // ServeHTTP is request processing function
@@ -129,22 +158,46 @@ func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		http.Error(w, "not authorized!!", http.StatusUnauthorized)
 	}
-	tangId, err := getTangId(spiffeId)
+	workspace, err := getWorkspace(spiffeId)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "not authorized!!", http.StatusUnauthorized)
 	}
-	log.Printf("tangId: %s", tangId)
+	log.Printf("tangWorkspace: %s", workspace)
 
-	// modify request by adding tangId
+	// modify request by adding workspace
 	originalPath := r.URL.Path
-	r.URL.Path = fmt.Sprintf("/%s/%s", tangId, originalPath)
+	// if the original path contains the well known EE path (/api/dee-hms/)
+	// set workspace after it
+	if strings.Contains(originalPath, EE_URL) {
+		suffix := strings.ReplaceAll(originalPath, EE_URL, "")
+		r.URL.Path = fmt.Sprintf("%s%s/%s", EE_URL, workspace, suffix)
+	} else {
+		r.URL.Path = fmt.Sprintf("/%s%s", workspace, originalPath)
+	}
+	addUserPassword(r, AppData{user: s.appData.user, password: s.appData.password})
+	noHttpsTargetHost := strings.ReplaceAll(s.targetHost, "https://", "")
+	r.Header.Add("Host", noHttpsTargetHost)
 	log.Printf("URL Path %s\n", r.URL.Path)
 	log.Printf("Original Path %s\n", originalPath)
+	for k, v := range r.Header {
+		log.Printf("Header[%s]:%s", k, v)
+	}
 	r.URL.Scheme = "https"
+	r.URL.Host = noHttpsTargetHost
+	r.Host = noHttpsTargetHost
+	if s.appData.verbose {
+		sr, e := httputil.DumpRequestOut(r, false /*no body to print*/)
+		if e == nil {
+			log.Printf("RequestOut:[%s]", string(sr))
+		}
+		sr, e = httputil.DumpRequest(r, false /*no body to print*/)
+		if e == nil {
+			log.Printf("Request:[%s]", string(sr))
+		}
+	}
 
 	s.Proxy.ServeHTTP(w, r)
-	log.Printf("received response from tang server")
 }
 
 // main function
@@ -154,9 +207,12 @@ func main() {
 	port := flag.String("port", "443", "HTTPS port, defaults to 443")
 	dbUser := flag.String("dbUser", "root", "DB user, defaults to root")
 	dbPass := flag.String("dbPass", "", "DB Password, defaults to none")
+	httpUser := flag.String("httpUser", "jdoe", "HTTP Authentication User, defaults to jdoe")
+	httpPass := flag.String("httpPass", "jdoe1123", "HTTP Authentication Password, defaults to jdoe123")
 	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
 	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
 	tangServer := flag.String("tangServer", "", "Mandatory, the server:port for the backend tang server")
+	verbose := flag.Bool("verbose", false, "Optional, prints more request/response information")
 	flag.Parse()
 
 	if *help {
@@ -182,10 +238,10 @@ func main() {
 		log.Fatal(pingErr)
 	}
 	log.Printf("Connected to DB!")
-	fmt.Printf("\nSending requests to %s\n", *tangServer)
+	log.Printf("Sending requests to %s", *tangServer)
 
 	// get a proxy
-	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer))
+	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer), &AppData{*httpUser, *httpPass, *verbose})
 	if err != nil {
 		log.Fatal(err)
 	}

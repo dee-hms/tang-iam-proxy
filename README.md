@@ -51,21 +51,31 @@ $ ./http-server-x509-svid-parser -help
 
 usage:
 
-http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> [-port <port>] [-help]
+http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
+                            [-port <port>] [-dbUser <dbuser>] [-dbPass <dbpass>] [-httpUser <httpuser>] [-httpPass <httppass>] [-help] [-verbose]
 
 Options:
   -help       Optional, prints help message
+  -dbUser     Optional, defaults to root
+  -dbPass     Optional, database user password, defaults to redhat123
+  -httpUser   Optional, http user, defaults to jdoe
+  -httpPass   Optional, http password, defaults to jdoe123
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory, server's certificate file
   -serverKey  Mandatory, server's private key certificate file
+  -tangServer Mandatory, tang server location in form host:port
 ```
 
 Taking into account the certificates generated in section [Certificate generation](#certificate-generation)), the
 server will be executed as follows:
 
 ```bash
-$ ./http-server-x509-svid-parser -serverCert server_bundle.pem -serverKey server.key -port 8082
-2023/01/02 03:06:09 Starting HTTPS server, port:[8082]
+$ ./http-server-x509-svid-parser -dbUser root -dbPass redhat12345 -httpUser jdoe -httpPass jdoe12345 -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
+...
+2023/07/28 17:15:08 Connected to DB!
+2023/07/28 17:15:08 Sending requests to env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
+2023/07/28 17:15:08 URL:[https://env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com]
+...
 ```
 
 It must be highlighted that server certificate (`server_bundle.pem`) already contains the CA certificate, so it is not necessary
