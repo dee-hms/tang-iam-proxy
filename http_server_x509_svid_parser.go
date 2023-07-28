@@ -47,9 +47,11 @@ Options:
 
 `
 
+// Read/Write timeouts
 const HTTP_READ_TIMEOUT = 5
 const HTTP_WRITE_TIMEOUT = 5
 
+// Global DB variable
 var db *sql.DB
 
 // printConnState prints information of the state of the connection and peer certificates, if any
@@ -76,6 +78,7 @@ func printConnState(r *http.Request) {
 	log.Print("**************** /Connection State ****************")
 }
 
+// getSpiffeId returns spiffe id parsed from Subject Alternate Names
 func getSpiffeId(r *http.Request) (string, error) {
 	state := r.TLS
 	for _, cert := range state.PeerCertificates {
@@ -88,6 +91,7 @@ func getSpiffeId(r *http.Request) (string, error) {
 	return "", fmt.Errorf("getSpiffeId: no spiffeId found")
 }
 
+// getTangId returns the ID (A.K.A. workspace) corresponding to an Spiffe ID
 func getTangId(spiffeId string) (string, error) {
 	var tangId string
 	row := db.QueryRow("SELECT tang_id FROM bindings WHERE spiffe_id = ?", spiffeId)
@@ -104,8 +108,8 @@ type SimpleProxy struct {
 	Proxy *httputil.ReverseProxy
 }
 
-// NewProxy takes target host and creates a reverse proxy
-func NewProxy(targetHost string) (*SimpleProxy, error) {
+// newProxy takes target host and creates a reverse proxy
+func newProxy(targetHost string) (*SimpleProxy, error) {
 	url, err := url.Parse(targetHost)
 	if err != nil {
 		return nil, err
@@ -115,6 +119,7 @@ func NewProxy(targetHost string) (*SimpleProxy, error) {
 	return s, nil
 }
 
+// ServeHTTP is request processing function
 func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received %s request for host %s from IP address %s",
 		r.Method, r.Host, r.RemoteAddr)
@@ -180,7 +185,7 @@ func main() {
 	fmt.Printf("\nSending requests to %s\n", *tangServer)
 
 	// get a proxy
-	proxy, err := NewProxy(fmt.Sprintf("https://%s", *tangServer))
+	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer))
 	if err != nil {
 		log.Fatal(err)
 	}
