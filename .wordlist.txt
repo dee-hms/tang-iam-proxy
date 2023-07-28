@@ -1,10 +1,17 @@
+CI
+ci
 Github
+Golang
 http
 HTTP
 https
 HTTPS
+Lint
+lint
 Markdown
 programmatically
+shellcheck
+Shellcheck
 SSL
 ssl
 SPIRE

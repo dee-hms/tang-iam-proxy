@@ -4,6 +4,12 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Status
+
+[![Golang CI lint](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml)\
+[![Shellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml)\
+[![Spellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml)
+
 ## Introduction
 This server is an HTTPS server that parses X509 client certificate and extracts SVID from Subject Alternate Names extension.
 Main purpose of the server is to show how to extract previous information from the SPIRE agent generated certificates.
