@@ -7,6 +7,7 @@
 ## Status
 
 [![Golang CI lint](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml)\
+[![Staticcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml)\
 [![Shellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml)\
 [![Spellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml)
 
