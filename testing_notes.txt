@@ -1,0 +1,64 @@
+I didn't have time to merge this info into the readme doc, but wanted to
+get this down, so you knew how to set things up.
+
+* First, install and create the DB
+
+sudo dnf install mysql mysql-server
+sudo service mysqld start
+
+mysql -u root -p
+create database tang_bindings;
+use tang_bindings;
+create table bindings ( spiffe_id VARCHAR(255) NOT NULL, tang_id VARCHAR(255) NOT NULL);
+insert into bindings (spiffe_id, tang_id) values ('spiffe://example.org/spire/agent/aws_iid/399777895069/us-east-1/i-0a875e31b0c81c7cd', 'workspace12345');
+
+* Create a backend server
+
+This is for testing only, but basically it echoes back what was passed in.
+In our case, this will be the tang server (with relevant socat in the container)
+
+dummy_backend.go
+
+package main
+
+import (
+        "fmt"
+        "net/http"
+)
+
+func main() {
+        http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+                fmt.Fprintf(rw, "[Origin server]\n\n")
+                fmt.Fprintf(rw, "Header\n\n")
+                for key, value := range r.Header {
+                        fmt.Fprintf(rw, "%q: %q\n", key, value)
+                }
+
+                fmt.Fprintf(rw, "\n\nBody\n\n")
+                fmt.Fprintf(rw, "%q", r.Body)
+        })
+        http.ListenAndServe(":8888", nil)
+}
+
+go run dummy_backend.go
+
+* Create a client cert to interact with the server.  This would be the agent SVID
+  in our scenario. I just created a random cert using the following code.
+
+openssl req -nodes -x509 -sha256 -newkey rsa:4096 \
+  -keyout example.org.key \
+  -out example.org.crt \
+  -days 356 \
+  -subj "/C=NL/ST=Zuid Holland/L=Rotterdam/O=ACME Corp/OU=IT Dept/CN=example.org"  \
+  -addext "subjectAltName = spiffe://example.org/spire/agent/aws_iid/399777895069/us-east-1/i-0a875e31b0c81c7cd"
+
+* Run the proxy
+
+./http-server-x509-svid-parser -serverKey ./server.key -serverCert ./server_bundle.pem -port 8121 --tangServer localhost:8888
+
+* test using curl
+
+curl  --cert ./test-cert/example.org.crt --cacert ca_server_cert.pem --key ./test-cert/example.org.key https://localhost:8121/adv
+
+You should see output in the proxy and output from the curl showing the modified url that was called.
+

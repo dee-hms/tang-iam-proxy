@@ -17,12 +17,18 @@ package main
 
 import (
 	"crypto/tls"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"strings"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const USAGE = `
@@ -32,14 +38,19 @@ http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <ser
 
 Options:
   -help       Optional, prints help message
+  -dbUser     Optional, defaults to root
+  -dbPass     Optional, database user password, defualts to redhat123
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory, server's certificate file
   -serverKey  Mandatory, server's private key certificate file
+  -tangServer Mandatory, tang server location in form host:port
 
 `
 
 const HTTP_READ_TIMEOUT = 5
 const HTTP_WRITE_TIMEOUT = 5
+
+var db *sql.DB
 
 // printConnState prints information of the state of the connection and peer certificates, if any
 func printConnState(r *http.Request) {
@@ -65,12 +76,82 @@ func printConnState(r *http.Request) {
 	log.Print("**************** /Connection State ****************")
 }
 
+func getSpiffeId(r *http.Request) (string, error) {
+	state := r.TLS
+	for _, cert := range state.PeerCertificates {
+		for _, uri := range cert.URIs {
+			if strings.HasPrefix(uri.String(), "spiffe://") {
+				return uri.String(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("getSpiffeId: no spiffeId found")
+}
+
+func getTangId(spiffeId string) (string, error) {
+	var tangId string
+	row := db.QueryRow("SELECT tang_id FROM bindings WHERE spiffe_id = ?", spiffeId)
+	if err := row.Scan(&tangId); err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("getTangId %s: no tangId found", spiffeId)
+		}
+		return "", fmt.Errorf("getTangId %s: %v", spiffeId, err)
+	}
+	return tangId, nil
+}
+
+type SimpleProxy struct {
+	Proxy *httputil.ReverseProxy
+}
+
+// NewProxy takes target host and creates a reverse proxy
+func NewProxy(targetHost string) (*SimpleProxy, error) {
+	url, err := url.Parse(targetHost)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &SimpleProxy{httputil.NewSingleHostReverseProxy(url)}
+	return s, nil
+}
+
+func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received %s request for host %s from IP address %s",
+		r.Method, r.Host, r.RemoteAddr)
+	printConnState(r)
+	spiffeId, err := getSpiffeId(r)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "not authorized!!", http.StatusUnauthorized)
+	}
+	tangId, err := getTangId(spiffeId)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "not authorized!!", http.StatusUnauthorized)
+	}
+	log.Printf("tangId: %s", tangId)
+
+	// modify request by adding tangId
+	originalPath := r.URL.Path
+	r.URL.Path = fmt.Sprintf("/%s/%s", tangId, originalPath)
+	log.Printf("URL Path %s\n", r.URL.Path)
+	log.Printf("Original Path %s\n", originalPath)
+	r.URL.Scheme = "https"
+
+	s.Proxy.ServeHTTP(w, r)
+	log.Printf("received response from tang server")
+}
+
 // main function
 func main() {
+	var err error
 	help := flag.Bool("help", false, "Optional, prints help information")
 	port := flag.String("port", "443", "HTTPS port, defaults to 443")
+	dbUser := flag.String("dbUser", "root", "DB user, defaults to root")
+	dbPass := flag.String("dbPass", "", "DB Password, defaults to none")
 	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
 	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
+	tangServer := flag.String("tangServer", "", "Mandatory, the server:port for the backend tang server")
 	flag.Parse()
 
 	if *help {
@@ -84,6 +165,26 @@ func main() {
 		os.Exit(2)
 	}
 
+	// Get a database handle.
+	dbConnectString := fmt.Sprintf("%s:%s@/tang_bindings", *dbUser, *dbPass)
+	db, err = sql.Open("mysql", dbConnectString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
+	log.Printf("Connected to DB!")
+	fmt.Printf("\nSending requests to %s\n", *tangServer)
+
+	// get a proxy
+	proxy, err := NewProxy(fmt.Sprintf("https://%s", *tangServer))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	server := &http.Server{
 		Addr:         ":" + *port,
 		ReadTimeout:  HTTP_READ_TIMEOUT * time.Second,
@@ -93,15 +194,8 @@ func main() {
 		},
 	}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received %s request for host %s from IP address %s",
-			r.Method, r.Host, r.RemoteAddr)
-		printConnState(r)
-	})
+	http.Handle("/", proxy)
 
 	log.Printf("Starting HTTPS server, port:[%v]", *port)
-	err := server.ListenAndServeTLS(*serverCert, *serverKey)
-	if err != nil {
-		log.Fatalf("Unable to start HTTPS server, error:[%v]", err)
-	}
+	log.Fatal(server.ListenAndServeTLS(*serverCert, *serverKey))
 }
