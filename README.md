@@ -66,7 +66,7 @@ Options:
   -tangServer Mandatory, tang server location in form host:port
 ```
 
-Taking into account the certificates generated in section [Certificate generation](#certificate-generation)), the
+Taking into account the certificates generated in section [Certificate generation](#certificate-generation), the
 server will be executed as follows:
 
 ```bash
