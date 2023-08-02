@@ -16,10 +16,8 @@ This server is an HTTPS server that parses X509 client certificate and extracts 
 Main purpose of the server is to show how to extract previous information from the SPIRE agent generated certificates.
 In this document it is explained how to generate required scripts for server and how to run `curl` application to act
 as a client that sends the agent certificate.
-The HTTPS server will parse client certificate, and dump the corresponding parsed information. This way, this server
-can be reused in the future as the proxy that will parse SVIDs, generate a table with SVIDs as key and reroute the
-different instances requests to its corresponding servers.
-
+The HTTPS server will parse client certificate, and dump the corresponding parsed information. It will also check in database
+if receiving SPIRE ID is registered and, if so, it will forward the request.
 
 ## Certificate generation
 The script `generate-signed-certificate.sh` has been included to generate the corresponding certificates.
