@@ -1,4 +1,4 @@
-# http-server-x509-svid-parser
+# tang-iam-proxy
 
 ## License
 
@@ -6,10 +6,10 @@
 
 ## Status
 
-[![Golang CI lint](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml)\
-[![Staticcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml)\
-[![Shellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml)\
-[![Spellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml)
+[![Golang CI lint](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/golangci-lint.yaml)\
+[![Staticcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/staticcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/staticcheck.yaml)\
+[![Shellcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/shellcheck.yaml)\
+[![Spellcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml)
 
 ## Introduction
 This server is an HTTPS server that parses X509 client certificate and extracts SVID from Subject Alternate Names extension.
@@ -45,7 +45,7 @@ The script will generate a collection of certificates. The ones that will be use
 The server has next usage:
 
 ```bash
-$ ./http-server-x509-svid-parser -help
+$ ./tang-iam-proxy -help
 
 usage:
 
@@ -68,7 +68,7 @@ Taking into account the certificates generated in section [Certificate generatio
 server will be executed as follows:
 
 ```bash
-$ ./http-server-x509-svid-parser -dbUser root -dbPass redhat12345 -httpUser jdoe -httpPass jdoe12345 -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
+$ ./tang-iam-proxy -dbUser root -dbPass redhat12345 -httpUser jdoe -httpPass jdoe12345 -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
 ...
 2023/07/28 17:15:08 Connected to DB!
 2023/07/28 17:15:08 Sending requests to env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com

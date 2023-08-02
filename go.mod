@@ -1,4 +1,4 @@
-module main/http-server-x509-svid-parser
+module main/tang-iam-proxy
 
 go 1.19
 
