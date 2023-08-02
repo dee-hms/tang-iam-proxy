@@ -6,6 +6,8 @@ http
 HTTP
 https
 HTTPS
+IAM
+iam
 Lint
 lint
 Markdown
