@@ -1,4 +1,4 @@
-# http-server-x509-svid-parser
+# tang-iam-proxy
 
 ## License
 
@@ -6,10 +6,10 @@
 
 ## Status
 
-[![Golang CI lint](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/golangci-lint.yaml)\
-[![Staticcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/staticcheck.yaml)\
-[![Shellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/shellcheck.yaml)\
-[![Spellcheck](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/http-server-x509-svid-parser/actions/workflows/spellcheck.yaml)
+[![Golang CI lint](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/golangci-lint.yaml)\
+[![Staticcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/staticcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/staticcheck.yaml)\
+[![Shellcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/shellcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/shellcheck.yaml)\
+[![Spellcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml)
 
 ## Introduction
 This server is an HTTPS server that parses X509 client certificate and extracts SVID from Subject Alternate Names extension.
