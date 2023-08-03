@@ -35,8 +35,8 @@ import (
 const USAGE = `
 usage:
 
-http_server_x509_svid_parser -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
-                            [-port <port>] [-dbUser <dbuser>] [-dbPass <dbpass>] [-httpUser <httpuser>] [-httpPass <httppass>] [-help] [-verbose]
+tang_iam_proxy -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
+               [-port <port>] [-dbUser <dbuser>] [-dbPass <dbpass>] [-httpUser <httpuser>] [-httpPass <httppass>] [-help] [-verbose]
 
 Options:
   -help       Optional, prints help message
