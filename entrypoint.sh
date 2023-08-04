@@ -19,6 +19,7 @@ db_command() {
   echo "$1" | mysql --user=root --password=redhat123
 }
 
+pushd /tmp || exit 1
 mysqld &
 sleep 5
 generate-signed-certificate.sh
