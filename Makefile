@@ -11,7 +11,8 @@ all: bin img
 bin:
 	mkdir -p $(ROOT_TARGET)
 	cp generate-signed-certificate.sh $(ROOT_TARGET)
-	cp entrypoint.sh $(ROOT_TARGET)
+	cp tang-iam-entrypoint.sh $(ROOT_TARGET)
+	cp tang-iam-health-check.sh $(ROOT_TARGET)
 	go build -o $(BIN_TARGET) tang_iam_proxy.go
 
 img:

@@ -19,10 +19,16 @@ db_command() {
   echo "$1" | mysql --user=root --password=redhat123
 }
 
+if [ -z "$(ls -A /var/lib/mysql)" ]; then
+    mysqld --initialize &
+    echo "DB Initialized"
+else
+    mysqld &
+    echo "DB reused"
+fi
 pushd /tmp || exit 1
-mysqld &
-sleep 5
 generate-signed-certificate.sh
+echo "Initialized"
 db_command "UPDATE mysql.user SET host='%' WHERE user='root';" 2>/dev/null 1>/dev/null
 db_command "grant all on db.* to 'root'@'127.0.0.1';" 2>/dev/null 1>/dev/null
 db_command "CREATE DATABASE tang_bindings;" 2>/dev/null 1>/dev/null
