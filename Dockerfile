@@ -32,4 +32,4 @@ COPY root /
 VOLUME ["/var/db"]
 EXPOSE ${PORT}
 
-CMD ["/usr/bin/entrypoint.sh"]
+CMD ["/usr/bin/tang-iam-entrypoint.sh"]
