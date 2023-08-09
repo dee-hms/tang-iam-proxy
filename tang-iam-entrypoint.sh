@@ -22,4 +22,4 @@ cp -v /usr/bin/server_bundle.pem .
 cp -v /usr/bin/server.key .
 # Uncomment sleep to connect and check tang iam proxy
 # sleep 3600
-/usr/bin/tang-iam-proxy -httpUser jdoe -httpPass jdoe12345 -port 8000 -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang -insecure
+/usr/bin/tang-iam-proxy -httpUser jdoe -httpPass jdoe123 -port 8000 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-nfi4y5-5lu5yqrv.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com -verbose
