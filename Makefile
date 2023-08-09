@@ -1,22 +1,30 @@
 BIN=tang-iam-proxy
-ROOT_TARGET=root/usr/bin
+RAW_ROOT_TARGET=root
+ROOT_TARGET=$(RAW_ROOT_TARGET)/usr/bin
 BIN_TARGET=$(ROOT_TARGET)/$(BIN)
 VERSION?=0.0.1
 
-.PHONY: all bin img clean test
+.PHONY: all bin cert img clean test
 
-all: bin img
+all: bin cert img
 	echo "Building all ..."
+
+cert:
+	./generate-signed-certificate.sh
+	mkdir -p $(ROOT_TARGET)
+	cp server_bundle.pem server.key $(ROOT_TARGET)
 
 bin:
 	mkdir -p $(ROOT_TARGET)
-	cp generate-signed-certificate.sh $(ROOT_TARGET)
+	echo "$(VERSION)" > $(RAW_ROOT_TARGET)/version.txt
 	cp tang-iam-entrypoint.sh $(ROOT_TARGET)
 	cp tang-iam-health-check.sh $(ROOT_TARGET)
+	cp tang_bindings.db $(ROOT_TARGET)
 	go build -o $(BIN_TARGET) tang_iam_proxy.go
 
 img:
-	podman build -t=quay.io/sec-eng-special/tang-iam-proxy-deehms:v$(VERSION) .
+	podman build -t=quay.io/sec-eng-special/tang-iam-proxy-deehms-sqlite:v$(VERSION) .
 
 clean:
-	rm -f $(BIN_TARGET)
+	rm -fr $(ROOT_TARGET)
+	rm -f $(RAW_ROOT_TARGET)/version.txt

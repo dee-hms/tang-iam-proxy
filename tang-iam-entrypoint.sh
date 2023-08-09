@@ -15,22 +15,11 @@
 # limitations under the License.
 #
 
-db_command() {
-  echo "$1" | mysql --user=root --password=redhat123
-}
-
-if [ -z "$(ls -A /var/lib/mysql)" ]; then
-    mysqld --initialize &
-    echo "DB Initialized"
-else
-    mysqld &
-    echo "DB reused"
-fi
+# Only copy database skeleton in case no database exist (fresh deployment)
+test -f /var/lib/sqlite/tang_bindings.db || cp -rfv /usr/bin/tang_bindings.db /var/lib/sqlite
 pushd /tmp || exit 1
-generate-signed-certificate.sh
-echo "Initialized"
-db_command "UPDATE mysql.user SET host='%' WHERE user='root';" 2>/dev/null 1>/dev/null
-db_command "grant all on db.* to 'root'@'127.0.0.1';" 2>/dev/null 1>/dev/null
-db_command "CREATE DATABASE tang_bindings;" 2>/dev/null 1>/dev/null
-db_command "USE tang_bindings; create table bindings (spiffe_id VARCHAR(255) NOT NULL, tang_workspace VARCHAR(255) NOT NULL);" 2>/dev/null 1>/dev/null
-/usr/bin/tang-iam-proxy -dbUser root -dbPass redhat123 -httpUser jdoe -httpPass jdoe12345 -port 8000 -serverCert server_bundle.pem --serverKey server.key -tangServer TANG_SERVER_HERE
+cp -v /usr/bin/server_bundle.pem .
+cp -v /usr/bin/server.key .
+# Uncomment sleep to connect and check tang iam proxy
+# sleep 3600
+/usr/bin/tang-iam-proxy -httpUser jdoe -httpPass jdoe12345 -port 8000 -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang -insecure

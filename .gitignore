@@ -1,5 +1,5 @@
 *~
-http-server-x509-svid-parser
+tang-iam-proxy
 passphrase.txt
 test_domain.key
 *.pem
