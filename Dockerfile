@@ -1,4 +1,4 @@
-FROM quay.io/sec-eng-special/mysql-server-deehms:latest
+FROM fedora:latest
 
 ENV SUMMARY="Tang IAM proxy" \
     DESCRIPTION="Tang IAM proxy allows to redirect traffic to tang backend by SPIFFE ID" \
@@ -19,17 +19,21 @@ LABEL name="rhel9/tang-iam-proxy" \
       io.openshift.tags="tang,tang-iam-proxy,container,NBDE,PBD,clevis,LUKS,McCallum-Relyea,Network Bound Disk Encryption"
 
 
-RUN microdnf update -y && \
-    microdnf install -y \
+RUN dnf update -y && \
+    dnf install -y \
+             iputils \
+             openssl \
              procps-ng \
              psmisc \
+             sqlite \
+             sqlite-libs \
              vim && \
-    microdnf clean all && \
+    dnf clean all && \
     rm -rf /var/cache/yum
 
 COPY root /
 
-VOLUME ["/var/db"]
+VOLUME ["/var/lib/sqlite"]
 EXPOSE ${PORT}
 
 CMD ["/usr/bin/tang-iam-entrypoint.sh"]

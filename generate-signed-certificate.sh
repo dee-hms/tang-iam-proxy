@@ -47,6 +47,7 @@ EOF
 openssl genrsa -out "${certname}.key" 4096
 openssl req -new -key "${certname}.key" -out "${certname}.csr" -subj "/C=ES/ST=Madrid/L=Madrid/O=Red Hat/OU=org/CN=www.redhat.com"
 openssl x509 -req -in "${certname}.csr" -CA "ca_${certname}_cert.pem" -CAkey "ca_${certname}.key" -out "${certname}.crt" -CAcreateserial -days 365 -sha256 -extfile "${certname}_cert_ext.cnf"
+chmod 664 "${certname}.key"
 ########################################################################################
 
 
