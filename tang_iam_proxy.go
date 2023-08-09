@@ -94,8 +94,6 @@ func getSpiffeId(r *http.Request) (string, error) {
 	state := r.TLS
 
 	if state == nil {
-		// QUIT: remove this hack
-		// return "spiffe://test_spiffe", nil
 		return "", fmt.Errorf("getSpiffeId: no TLS in request")
 	}
 	for _, cert := range state.PeerCertificates {
@@ -126,6 +124,7 @@ type AppData struct {
 	user string
 	password string
 	verbose bool
+	insecure bool
 }
 
 // SimpleProxy relevant information
@@ -154,14 +153,16 @@ func basicAuth(username string, password string) string {
 
 // addUserPassword encodes Authorization header with user and password
 func addUserPassword(req *http.Request, audata AppData) {
-	req.Header.Add("Authorization", "Basic " + basicAuth(audata.user, audata.password))
+	if ! audata.insecure {
+		req.Header.Add("Authorization", "Basic " + basicAuth(audata.user, audata.password))
+	}
 }
 
 // addWorkspaceToRequest
 func (s *SimpleProxy) addWorkspaceToRequest(r *http.Request, workspace string) {
 	// modify request by adding workspace
 	originalPath := r.URL.Path
-	addUserPassword(r, AppData{user: s.appData.user, password: s.appData.password})
+	addUserPassword(r, AppData{user: s.appData.user, password: s.appData.password, insecure: s.appData.insecure})
 	noHttpsTargetHost := strings.ReplaceAll(s.targetHost, "https://", "")
 	r.Header.Add("Host", noHttpsTargetHost)
 	log.Printf("URL Path %s\n", r.URL.Path)
@@ -179,8 +180,11 @@ func (s *SimpleProxy) addWorkspaceToRequest(r *http.Request, workspace string) {
 			r.URL.Path = fmt.Sprintf("%sWORKSPACE_NOT_FOUND/%s", EE_URL, suffix)
 		}
 	} else {
-		r.URL.Path = fmt.Sprintf("/%s%s", workspace, originalPath)
+		// Standalone route (passthrough). Must encode EE_URL
+		r.URL.Path = fmt.Sprintf("%s%s%s", EE_URL, workspace, originalPath)
+		log.Printf("Detected standalone (passthrough) route. r.URL.Path:[%v]", r.URL.Path)
 	}
+	// Destination host
 	r.URL.Path = strings.ReplaceAll(r.URL.Path, "tang-iam-proxy", "dee-hms")
 	for k, v := range r.Header {
 		log.Printf("Header[%s]:%s", k, v)
@@ -265,7 +269,7 @@ func main() {
 	log.Printf("Sending requests to %s", *tangServer)
 
 	// get a proxy
-	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer), &AppData{*httpUser, *httpPass, *verbose})
+	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer), &AppData{*httpUser, *httpPass, *verbose, *insecure})
 	if err != nil {
 		log.Fatal(err)
 	}
