@@ -58,6 +58,9 @@ const HTTP_WRITE_TIMEOUT = 5 * time.Second
 // EE well known URL
 const EE_URL = "/api/tang-iam-proxy/"
 
+// HEALTH_PATH
+const HEALTH_PATH = "/health"
+
 // Global DB variable
 var db *sql.DB
 
@@ -182,25 +185,44 @@ func (s *SimpleProxy) addWorkspaceToRequest(r *http.Request, workspace string) {
 	} else {
 		// Standalone route (passthrough). Must encode EE_URL
 		r.URL.Path = fmt.Sprintf("%s%s%s", EE_URL, workspace, originalPath)
-		log.Printf("Detected standalone (passthrough) route. r.URL.Path:[%v]", r.URL.Path)
+		log.Printf("Detected standalone (passthrough) route. originalPath:[%v]", originalPath)
 	}
 	// Destination host
 	r.URL.Path = strings.ReplaceAll(r.URL.Path, "tang-iam-proxy", "dee-hms")
 	for k, v := range r.Header {
-		log.Printf("Header[%s]:%s", k, v)
 		if k == "X-Forwarded-Host" {
 			r.URL.Host = string(v[0])
 			r.Host = string(v[0])
 		}
 	}
-	log.Printf("Forwarding Request URL:[%s]\n", r.URL)
-	log.Printf("Forwarding Request:[%v]\n", r)
+	if s.appData.verbose {
+		log.Printf("Forwarding Request URL:[%s]\n", r.URL)
+		log.Printf("Forwarding Request:[%v]\n", r)
+	}
+}
+
+// logRequest logs request passed in parameter
+func logRequest(r *http.Request) {
+	log.Printf("Received %s request for host %s from IP address %s",
+		r.Method, r.Host, r.RemoteAddr)
+	for k, v := range r.Header {
+		log.Printf("Header[%s]:%s", k, v)
+	}
+}
+
+func isHealthRequest(r *http.Request) bool {
+	return r.URL.Path == HEALTH_PATH
 }
 
 // ServeHTTP is request processing function
 func (s *SimpleProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received %s request for host %s from IP address %s",
-		r.Method, r.Host, r.RemoteAddr)
+	if isHealthRequest(r) {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if s.appData.verbose {
+		logRequest(r)
+	}
 	printConnState(r)
 	spiffeId, err := getSpiffeId(r)
 	if err != nil {
