@@ -17,9 +17,10 @@
 
 # Only copy database skeleton in case no database exist (fresh deployment)
 test -f /var/lib/sqlite/tang_bindings.db || cp -rfv /usr/bin/tang_bindings.db /var/lib/sqlite
+test -z "${PORT}" && PORT=8000
 pushd /tmp || exit 1
 cp -v /usr/bin/server_bundle.pem .
 cp -v /usr/bin/server.key .
 # Uncomment sleep to connect and check tang iam proxy
 # sleep 3600
-/usr/bin/tang-iam-proxy -httpUser jdoe -httpPass jdoe123 -port 8000 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-nfi4y5-5lu5yqrv.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com -verbose
+/usr/bin/tang-iam-proxy -internal -verbose -port "${PORT}" -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang:8000

@@ -35,7 +35,7 @@ const USAGE = `
 usage:
 
 tang_iam_proxy -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
-               [-port <port>] [-dbFile <dbfile>] [-httpUser <httpuser>] [-httpPass <httppass>] [-insecure] [-help] [-verbose]
+               [-port <port>] [-dbFile <dbfile>] [-httpUser <httpuser>] [-httpPass <httppass>] [-insecure] [-internal] [-help] [-verbose]
 
 Options:
   -help       Optional, prints help message
@@ -43,6 +43,7 @@ Options:
   -httpUser   Optional, http user, defaults to jdoe
   -httpPass   Optional, http password, defaults to jdoe123
   -insecure   Optional, insecure more
+  -internal   Optional, disabled by default
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory (except for insecure mode), server's certificate file
   -serverKey  Mandatory (except for insecure mode), server's private key certificate file
@@ -128,6 +129,7 @@ type AppData struct {
 	password string
 	verbose bool
 	insecure bool
+	internal bool
 }
 
 // SimpleProxy relevant information
@@ -165,14 +167,24 @@ func addUserPassword(req *http.Request, audata AppData) {
 func (s *SimpleProxy) addWorkspaceToRequest(r *http.Request, workspace string) {
 	// modify request by adding workspace
 	originalPath := r.URL.Path
-	addUserPassword(r, AppData{user: s.appData.user, password: s.appData.password, insecure: s.appData.insecure})
+	if ! s.appData.internal {
+		addUserPassword(r, AppData{user: s.appData.user, password: s.appData.password, insecure: s.appData.insecure})
+	}
 	noHttpsTargetHost := strings.ReplaceAll(s.targetHost, "https://", "")
+	if s.appData.internal {
+		r.URL.Scheme = "http"
+		noHttpsTargetHost = strings.ReplaceAll(s.targetHost, "http://", "")
+	} else {
+		r.URL.Scheme = "https"
+	}
+	r.URL.Host = noHttpsTargetHost
+	r.Host = noHttpsTargetHost
 	r.Header.Add("Host", noHttpsTargetHost)
 	log.Printf("URL Path %s\n", r.URL.Path)
 	log.Printf("Original Path %s\n", originalPath)
-	r.URL.Scheme = "https"
-	r.URL.Host = noHttpsTargetHost
-	r.Host = noHttpsTargetHost
+	log.Printf("r.Host: %s\n", r.Host)
+	log.Printf("r.URL.Host %s\n", r.URL.Host)
+
 	// if the original path contains the well known path (/api/tang-iam-proxy/)
 	// set workspace after it
 	if strings.Contains(originalPath, EE_URL) {
@@ -259,7 +271,8 @@ func main() {
 	dbFile := flag.String("dbFile", "/var/lib/sqlite/tang_bindings.db", "SQLite tang_bindings database file")
 	httpUser := flag.String("httpUser", "jdoe", "HTTP Authentication User, defaults to jdoe")
 	httpPass := flag.String("httpPass", "jdoe1123", "HTTP Authentication Password, defaults to jdoe123")
-	insecure := flag.Bool("insecure", false, "Optional, start in HTTP(no TLS) mode")
+	insecure := flag.Bool("insecure", false, "Optional, start in HTTP(no TLS) mode (disabled by default)")
+	internal := flag.Bool("internal", false, "Optional, communicate with tang backend internally (disabled by default)")
 	serverCert := flag.String("serverCert", "", "Mandatory, the name of the server's certificate file")
 	serverKey := flag.String("serverKey", "", "Mandatory, the file name of the server's private key file")
 	tangServer := flag.String("tangServer", "", "Mandatory, the server:port for the backend tang server")
@@ -291,7 +304,13 @@ func main() {
 	log.Printf("Sending requests to %s", *tangServer)
 
 	// get a proxy
-	proxy, err := newProxy(fmt.Sprintf("https://%s", *tangServer), &AppData{*httpUser, *httpPass, *verbose, *insecure})
+	remote := fmt.Sprintf("https://%s", *tangServer)
+
+	if (*internal) {
+		remote = fmt.Sprintf("http://%s", *tangServer)
+	}
+
+	proxy, err := newProxy(remote, &AppData{*httpUser, *httpPass, *verbose, *insecure, *internal})
 	if err != nil {
 		log.Fatal(err)
 	}
