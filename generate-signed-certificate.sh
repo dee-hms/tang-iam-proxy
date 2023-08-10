@@ -15,12 +15,42 @@
 # limitations under the License.
 #
 certname="server"
-test -n "$1" && certname="$1"
+sub_alt_name="tang-backend-tang"
 
-printf "*************************\n"
+function usage() {
+  echo
+  echo "$1 [-n name] [-s subAlternateName][-h] [-v]"
+  echo
+  echo "Examples:"
+  echo "        $1 -n server -s tang-iam-proxy-passthrough"
+  echo
+  echo "Options:"
+  echo "        -n \"name\": Base name for generated files"
+  echo "        -s \"subAlternateName\": extra Subject Alternate Name for server certificate"
+  echo "        -h: help"
+  echo
+  exit "$2"
+}
+
+while getopts "n:s:h" arg
+do
+  case "${arg}" in
+    n) certname=${OPTARG}
+       ;;
+
+    s) sub_alt_name=${OPTARG}
+       ;;
+    h) usage "$0" 0
+       ;;
+    *) usage "$0" 1
+       ;;
+  esac
+done
+
+printf "*****************************************\n"
 printf "certname:%s\n" "${certname}"
-printf "*************************\n"
-
+printf "sub_alternate_name:%s\n" "${sub_alt_name}"
+printf "*****************************************\n"
 
 ############################# Generate CA ###############################
 openssl genrsa -out "ca_${certname}.key" 4096
@@ -42,6 +72,7 @@ subjectAltName = @alt_names
 IP.1 = 1.2.3.4
 DNS.1 = fedora
 DNS.2 = localhost
+DNS.3 = ${sub_alt_name}
 EOF
 
 openssl genrsa -out "${certname}.key" 4096
