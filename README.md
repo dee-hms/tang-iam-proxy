@@ -17,7 +17,7 @@ Main purpose of the server is to show how to extract previous information from t
 In this document it is explained how to generate required scripts for server and how to run `curl` application to act
 as a client that sends the agent certificate.
 The HTTPS server will parse client certificate, and dump the corresponding parsed information. It will also check in database
-if receiving SPIRE ID is registered and, if so, it will forward the request.
+if receiving SPIRE ID is registered and, if so, it will forward the request to the Tang server specified as parameter.
 
 ## Certificate generation
 The script `generate-signed-certificate.sh` has been included to generate the corresponding certificates.
@@ -40,9 +40,8 @@ The script will generate a collection of certificates. The ones that will be use
 * `server_bundle.pem`: File that will act as the server certificate
 * `server.key`: File that will be used as the server private key
 
-
-## Server execution
-The server has next usage:
+## Proxy execution
+The proxy has next usage:
 
 ```bash
 $ ./tang-iam-proxy -help
@@ -50,29 +49,31 @@ $ ./tang-iam-proxy -help
 usage:
 
 tang_iam_proxy -serverCert <serverCertificateFile> -serverKey <serverPrivateKeyFile> -tangServer <tangServer>
-                           [-port <port>] [-dbUser <dbuser>] [-dbPass <dbpass>] [-httpUser <httpuser>] [-httpPass <httppass>] [-help] [-verbose]
+               [-port <port>] [-dbFile <dbfile>] [-httpUser <httpuser>] [-httpPass <httppass>] [-insecure] [-internal] [-help] [-verbose]
 
 Options:
   -help       Optional, prints help message
-  -dbUser     Optional, defaults to root
-  -dbPass     Optional, database user password, defaults to redhat123
+  -dbFile     Optional, defaults to /var/lib/sqlite/tang_bindings.db
   -httpUser   Optional, http user, defaults to jdoe
   -httpPass   Optional, http password, defaults to jdoe123
+  -insecure   Optional, insecure more
+  -internal   Optional, disabled by default
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
-  -serverCert Mandatory, server's certificate file
-  -serverKey  Mandatory, server's private key certificate file
+  -serverCert Mandatory (except for insecure mode), server's certificate file
+  -serverKey  Mandatory (except for insecure mode), server's private key certificate file
   -tangServer Mandatory, tang server location in form host:port
+  -verbose    Optional, be more verbose
 ```
 
 Taking into account the certificates generated in section [Certificate generation](#certificate-generation), the
 server will be executed as follows:
 
 ```bash
-$ ./tang-iam-proxy -dbUser root -dbPass redhat12345 -httpUser jdoe -httpPass jdoe12345 -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
+$ ./tang-iam-proxy -internal -dbFile /var/lib/sqlite/tang_bindings.db -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang:8000
 ...
 2023/07/28 17:15:08 Connected to DB!
-2023/07/28 17:15:08 Sending requests to env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com
-2023/07/28 17:15:08 URL:[https://env-ephemeral-b52sye-nzjnxgp5.apps.c-rh-c-eph.8p0c.p1.openshiftapps.com]
+2023/07/28 17:15:08 Sending requests to tang-backend-tang-8000
+2023/07/28 17:15:08 URL:[http://tang-backend-tang-8000]
 ...
 ```
 
