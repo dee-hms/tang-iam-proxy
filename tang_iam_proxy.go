@@ -42,7 +42,7 @@ Options:
   -dbFile     Optional, defaults to /var/lib/sqlite/tang_bindings.db
   -httpUser   Optional, http user, defaults to jdoe
   -httpPass   Optional, http password, defaults to jdoe123
-  -insecure   Optional, insecure more
+  -insecure   Optional, insecure mode (HTTP)
   -internal   Optional, disabled by default
   -port       Optional, the HTTPS port for the server to listen on, defaults to 443
   -serverCert Mandatory (except for insecure mode), server's certificate file
