@@ -23,12 +23,29 @@ if receiving SPIRE ID is registered and, if so, it will forward the request to t
 The script `generate-signed-certificate.sh` has been included to generate the corresponding certificates.
 It can be provided a parameter to name the certificates. Otherwise, the naming used will be *server*.
 
+Usage of the script is as follows:
+
+```bash
+$ ./generate-signed-certificate.sh -h
+
+./generate-signed-certificate.sh [-n name] [-s subAlternateName][-h] [-v]
+
+Examples:
+        ./generate-signed-certificate.sh -n server -s tang-iam-proxy-passthrough
+
+Options:
+        -n "name": Base name for generated files
+        -s "subAlternateName": extra Subject Alternate Name for server certificate
+        -h: help
+```
+
 To generate the scripts, execute it:
 
 ```bash
 $ ./generate-signed-certificate.sh
 *************************
 certname:server
+sub_alternate_name:tang-backend-tang
 *************************
 Certificate request self-signature ok
 subject=C = ES, ST = Madrid, L = Madrid, O = Red Hat, OU = org, CN = www.redhat.com
@@ -39,6 +56,18 @@ The script will generate a collection of certificates. The ones that will be use
 * `ca_server_cert.pem`: This file will be used as the CA certificate
 * `server_bundle.pem`: File that will act as the server certificate
 * `server.key`: File that will be used as the server private key
+
+The script can be provided a different subject alternate name to store in server's certificate:
+
+```bash
+$ ./generate-signed-certificate.sh -s tang-iam-proxy-passthrough-ephemeral-012345.apps.c-rh-c-eph.1a0b.p1.openshiftapps.com
+*****************************************
+certname:server
+sub_alternate_name:tang-iam-proxy-passthrough-ephemeral-012345.apps.c-rh-c-eph.1a0b.p1.openshiftapps.com
+*****************************************
+Certificate request self-signature ok
+subject=C = ES, ST = Madrid, L = Madrid, O = Red Hat, OU = org, CN = www.redhat.com
+```
 
 ## Proxy execution
 The proxy has next usage:
