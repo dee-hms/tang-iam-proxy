@@ -1,5 +1,6 @@
 CI
 ci
+ConsoleDot
 Github
 Golang
 http
@@ -17,6 +18,7 @@ Shellcheck
 SSL
 ssl
 SPIRE
+SQLite
 Staticcheck
 staticcheck
 SVID

@@ -18,6 +18,9 @@ In this document it is explained how to generate required scripts for server and
 as a client that sends the agent certificate.
 The HTTPS server will parse client certificate, and dump the corresponding parsed information. It will also check in database
 if receiving SPIRE ID is registered and, if so, it will forward the request to the Tang server specified as parameter.
+Database supported is [SQLite](https://www.sqlite.org/index.html), essentially due to two aspects:
+* It provides a very simple mechanism to be configured
+* It has a very small footprint, which makes it suitable to be used in [ConsoleDot](https://github.com/RedHatInsights)
 
 ## Certificate generation
 The script `generate-signed-certificate.sh` has been included to generate the corresponding certificates.
