@@ -23,4 +23,4 @@ cp -v /usr/bin/server_bundle.pem .
 cp -v /usr/bin/server.key .
 # Uncomment sleep to connect and check tang iam proxy
 # sleep 3600
-/usr/bin/tang-iam-proxy -internal -verbose -port "${PORT}" -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang:8000
+/usr/bin/tang-iam-proxy -internal -verbose -port "${PORT}" -serverCert server_bundle.pem --serverKey server.key -tangServer tang-server-deployment:8000

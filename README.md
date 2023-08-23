@@ -48,7 +48,7 @@ To generate the scripts, execute it:
 $ ./generate-signed-certificate.sh
 *************************
 certname:server
-sub_alternate_name:tang-backend-tang
+sub_alternate_name:tang-server-deployment
 *************************
 Certificate request self-signature ok
 subject=C = ES, ST = Madrid, L = Madrid, O = Red Hat, OU = org, CN = www.redhat.com
@@ -101,11 +101,11 @@ Taking into account the certificates generated in section [Certificate generatio
 server will be executed as follows:
 
 ```bash
-$ ./tang-iam-proxy -internal -dbFile /var/lib/sqlite/tang_bindings.db -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer tang-backend-tang:8000
+$ ./tang-iam-proxy -internal -dbFile /var/lib/sqlite/tang_bindings.db -port 8887 -serverCert server_bundle.pem --serverKey server.key -tangServer tang-server-deployment:8000
 ...
 2023/07/28 17:15:08 Connected to DB!
-2023/07/28 17:15:08 Sending requests to tang-backend-tang-8000
-2023/07/28 17:15:08 URL:[http://tang-backend-tang-8000]
+2023/07/28 17:15:08 Sending requests to tang-server-deployment:8000
+2023/07/28 17:15:08 URL:[http://tang-server-deployment:8000]
 ...
 ```
 

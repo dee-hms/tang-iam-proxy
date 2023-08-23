@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 certname="server"
-sub_alt_name="tang-backend-tang"
+sub_alt_name="tang-server-deployment"
 
 function usage() {
   echo
