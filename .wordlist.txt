@@ -11,6 +11,7 @@ IAM
 iam
 Lint
 lint
+Makefile
 Markdown
 programmatically
 shellcheck
