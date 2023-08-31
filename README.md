@@ -72,6 +72,54 @@ Certificate request self-signature ok
 subject=C = ES, ST = Madrid, L = Madrid, O = Red Hat, OU = org, CN = www.redhat.com
 ```
 
+## Compilation
+Tang IAM proxy can be compiled through `make` tool. `Makefile` exists so that it eases the compilation,
+required certificates and the container generation:
+
+```bash
+$ make
+mkdir -p root/usr/bin
+echo "0.0.1" > root/version.txt
+cp tang-iam-entrypoint.sh root/usr/bin
+cp tang-iam-health-check.sh root/usr/bin
+cp tang_bindings.db root/usr/bin
+go build -o root/usr/bin/tang-iam-proxy tang_iam_proxy.go
+./generate-signed-certificate.sh -s "tang-iam-proxy-passthrough"
+*****************************************
+certname:server
+sub_alternate_name:tang-iam-proxy-passthrough
+*****************************************
+...
+--> 2d54bac76533
+Successfully tagged quay.io/sec-eng-special/tang-iam-proxy-deehms-sqlite:v0.0.1
+2d54bac765330435f1d2564810f2d262393d9ef1f0ab5086b3bd78fa84470254
+echo "Building all ..."
+Building all ...
+```
+As shown previously, current version is `0.0.1`.
+`Makefile` can be parameterized with two parameters:
+* VERSION: To generate a different version
+* SUB_ALT_NAME: To include an additional Subject Alternate Name in the server certificate.
+An example of a full parameterized compilation execution is shown below:
+
+```bash
+$ VERSION=0.0.2 SUB_ALT_NAME=tang-iam-proxy-passthrough-ephemeral-123-456-789.openshiftapps.com make
+mkdir -p root/usr/bin
+echo "0.0.2" > root/version.txt
+...
+./generate-signed-certificate.sh -s "tang-iam-proxy-passthrough"
+*****************************************
+certname:server
+sub_alternate_name: tang-iam-proxy-passthrough-ephemeral-123-456-789.openshiftapps.com
+*****************************************
+...
+--> 7dabf6a2d65a
+Successfully tagged quay.io/sec-eng-special/tang-iam-proxy-deehms-sqlite:v0.0.2
+7dabf6a2d65a92ee02ab49b4467007ea12abd28cd5f9dbf971a5e4bff6fbe054
+echo "Building all ..."
+Building all ...
+```
+
 ## Proxy execution
 The proxy has next usage:
 
