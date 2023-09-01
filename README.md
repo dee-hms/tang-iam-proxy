@@ -12,19 +12,28 @@
 [![Spellcheck](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml/badge.svg)](https://github.com/dee-hms/tang-iam-proxy/actions/workflows/spellcheck.yaml)
 
 ## Introduction
-This server is an HTTPS server that parses X509 client certificate and extracts SVID from Subject Alternate Names extension.
-Main purpose of the server is to show how to extract previous information from the SPIRE agent generated certificates.
-In this document it is explained how to generate required scripts for server and how to run `curl` application to act
+Tang IAM proxy is an HTTPS proxy that parses X509 client certificate and
+extracts SVID from Subject Alternate Names extension.
+Main purpose of the proxy is to show how to extract previous information
+from a SPIRE agent generated certificates.
+In this document it is explained how to generate required scripts for
+the proxy server, and how to run `curl` application to act
 as a client that sends the agent certificate.
-The HTTPS server will parse client certificate, and dump the corresponding parsed information. It will also check in database
-if receiving SPIRE ID is registered and, if so, it will forward the request to the Tang server specified as parameter.
-Database supported is [SQLite](https://www.sqlite.org/index.html), essentially due to two aspects:
+The HTTPS server will parse client certificate, and will dump the
+corresponding parsed information. It will also check in database
+if receiving SPIRE ID is registered and, if so, it will forward the request
+to the Tang server specified as parameter.
+Database supported is [SQLite](https://www.sqlite.org/index.html),
+essentially due to two aspects:
 * It provides a very simple mechanism to be configured
-* It has a very small footprint, which makes it suitable to be used in [ConsoleDot](https://github.com/RedHatInsights)
+* It has a very small footprint, which makes it suitable to be used
+in [ConsoleDot](https://github.com/RedHatInsights)
 
 ## Certificate generation
-The script `generate-signed-certificate.sh` has been included to generate the corresponding certificates.
-It can be provided a parameter to name the certificates. Otherwise, the naming used will be *server*.
+The script `generate-signed-certificate.sh` has been included to generate
+the corresponding certificates.
+It can be provided a parameter to name the certificates.
+Otherwise, the naming used will be *server*.
 
 Usage of the script is as follows:
 
@@ -73,7 +82,8 @@ subject=C = ES, ST = Madrid, L = Madrid, O = Red Hat, OU = org, CN = www.redhat.
 ```
 
 ## Compilation
-Tang IAM proxy can be compiled through `make` tool. `Makefile` exists so that it eases the compilation,
+Tang IAM proxy can be compiled through `make` tool.
+`Makefile` exists so that it eases the compilation,
 required certificates and the container generation:
 
 ```bash
@@ -99,8 +109,10 @@ Building all ...
 As shown previously, current version is `0.0.1`.
 `Makefile` can be parameterized with two parameters:
 * VERSION: To generate a different version
-* SUB_ALT_NAME: To include an additional Subject Alternate Name in the server certificate.
-An example of a full parameterized compilation execution is shown below:
+* SUB_ALT_NAME: To include an additional Subject Alternate Name
+in the server certificate.
+An example of a full parameterized compilation execution
+is shown below:
 
 ```bash
 $ VERSION=0.0.2 SUB_ALT_NAME=tang-iam-proxy-passthrough-ephemeral-123-456-789.openshiftapps.com make
@@ -202,12 +214,12 @@ MIGHAgE...LoNg_KeY_HeRe_123a_...LuymQw
 -----END PRIVATE KEY-----
 
 ## SVID identification
-To check if server is parsing SVID correctly, agent certificate can be read with `openssl` tool, so that 
+To check if server is parsing SVID correctly, agent certificate can be read with `openssl` tool, so that
 Subject Alternate Name URI is obtained:
 
 ```bash
 openssl x509 -inform der  -in ./agent_svid.der  --text | grep -i "Subject Alternative Name:" -A1
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 URI:spiffe://example.org/spire/agent/aws_iid/12977789345/us-east-1/i-1234d7bdff825678
 ```
 The URI string `spiffe://example.org/spire/agent/aws_iid/12977789345/us-east-1/i-1234d7bdff825678` is the
@@ -258,4 +270,3 @@ This way, forward implementation of a proxy that uses SVID to forward agent requ
 [Install Spire Agents](https://spiffe.io/docs/latest/deploying/install-agents/)\
 [Install the Spire Server](https://spiffe.io/docs/latest/deploying/install-server/)\
 [How to generate certificates](https://www.golinuxcloud.com/golang-http/#Secure_Communication_over_HTTP_with_TLS_and_MTLS)
-
