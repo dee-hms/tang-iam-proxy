@@ -40,7 +40,7 @@ Usage of the script is as follows:
 ```bash
 $ ./generate-signed-certificate.sh -h
 
-./generate-signed-certificate.sh [-n name] [-s subAlternateName][-h] [-v]
+./generate-signed-certificate.sh [-n name] [-s subAlternateName] [-h] [-v]
 
 Examples:
         ./generate-signed-certificate.sh -n server -s tang-iam-proxy-passthrough
@@ -49,6 +49,7 @@ Options:
         -n "name": Base name for generated files
         -s "subAlternateName": extra Subject Alternate Name for server certificate
         -h: help
+        -v: verbose
 ```
 
 To generate the scripts, execute it:
