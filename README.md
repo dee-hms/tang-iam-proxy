@@ -52,7 +52,7 @@ Options:
         -v: verbose
 ```
 
-To generate the scripts, execute it:
+To generate the certificates, execute the script:
 
 ```bash
 $ ./generate-signed-certificate.sh
